@@ -121,7 +121,10 @@ export async function loadWell(
       info.imageSource = imgSource;
       config.onClick(info);
     } else if (imgSource) {
-      window.open(`${window.location.origin + window.location.pathname}?source=${imgSource}`);
+    // Update the parent's current path field
+    window.parent.postMessage({ type: "zarr-path-update", level: "image", path: imgSource }, "*");
+    // Open the new URL with the updated path in the same window
+    window.open(`${window.location.origin + window.location.pathname}?source=${imgSource}`, '_self');
     }
   };
 
@@ -237,7 +240,10 @@ export async function loadPlate(
       info.imageSource = imgSource;
       config.onClick(info);
     } else if (imgSource) {
-      window.open(`${window.location.origin + window.location.pathname}?source=${imgSource}`);
+    // Update the parent's current path field
+    window.parent.postMessage({ type: "zarr-path-update", level: "well", path: imgSource }, "*");
+    // Open the new URL with the updated path in the same window
+      window.open(`${window.location.origin + window.location.pathname}?source=${imgSource}`, '_self');
     }
   };
   return sourceData;
