@@ -1,0 +1,8 @@
+services:
+  vizarr:
+    build:
+      context: .
+    image: vizarr
+    container_name: vizarr
+    ports:
+      - "8000:80"
