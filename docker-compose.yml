@@ -4,5 +4,6 @@ services:
       context: .
     image: vizarr
     container_name: vizarr
+    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
     ports:
-      - "8000:80"
+      - "${VIZARR_PORT:-3000}:80"
