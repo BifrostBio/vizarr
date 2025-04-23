@@ -2,6 +2,7 @@ services:
   vizarr:
     build:
       context: .
+      dockerfile: ./Dockerfile
     image: vizarr
     container_name: vizarr
     restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
