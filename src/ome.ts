@@ -80,7 +80,9 @@ export async function loadWell(
   if (utils.isOmeMultiscales(imgAttrs)) {
     meta = parseOmeroMeta(imgAttrs.omero, axes);
   } else {
-    meta = await defaultMeta(loaders[0].loader, axis_labels);
+    const lowres = loaders.at(-1);
+    utils.assert(lowres, "Expected at least one resolution, found none.");
+    meta = await defaultMeta(lowres.loader, axis_labels);
   }
 
   const sourceData: SourceData = {
@@ -205,7 +207,9 @@ export async function loadPlate(
   if ("omero" in imgAttrs) {
     meta = parseOmeroMeta(imgAttrs.omero, axes);
   } else {
-    meta = await defaultMeta(loaders[0].loader, axis_labels);
+    const lowres = loaders.at(-1);
+    utils.assert(lowres, "Expected at least one resolution, found none.");
+    meta = await defaultMeta(lowres.loader, axis_labels);
   }
 
   // Load Image to use for channel names, rendering settings, sizeZ, sizeT etc.
@@ -252,14 +256,22 @@ export async function loadPlate(
 export async function loadOmeMultiscales(
   config: ImageLayerConfig,
   grp: zarr.Group<zarr.Readable>,
-  attrs: { multiscales: Ome.Multiscale[]; omero: Ome.Omero },
+  attrs: { multiscales: Ome.Multiscale[] },
 ): Promise<SourceData> {
   const { name, opacity = 1, colormap = "" } = config;
   const data = await utils.loadMultiscales(grp, attrs.multiscales);
   const axes = utils.getNgffAxes(attrs.multiscales);
   const axis_labels = utils.getNgffAxisLabels(axes);
-  const meta = parseOmeroMeta(attrs.omero, axes);
   const tileSize = utils.guessTileSize(data[0]);
+  let meta: Meta;
+  if (utils.isOmeMultiscales(attrs)) {
+    meta = parseOmeroMeta(attrs.omero, axes);
+  } else {
+    const lowresArray = data.at(-1);
+    utils.assert(lowresArray, "Expected at least one resolution in multiscales, found none.");
+    const lowresSource = new ZarrPixelSource(lowresArray, { labels: axis_labels, tileSize });
+    meta = await defaultMeta(lowresSource, axis_labels);
+  }
   const loader = data.map((arr) => new ZarrPixelSource(arr, { labels: axis_labels, tileSize }));
   const labels = await resolveOmeLabelsFromMultiscales(grp);
   return {
